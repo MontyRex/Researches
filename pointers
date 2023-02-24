@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+/* run this program using the console pauser or add your own getch, system("pause") or input loop */
+
+int main() 
+{
+	char s[80];
+	int i;
+	fget("%c", &s);
+	for (i = 0; i < 80; i++)
+	{
+		if (s[i] == "a")
+		{
+			s[i] = "A";
+		}
+		else if (s[i] == "b")
+		{
+			s[i] = "B";
+		}
+	}
+	printf("%c", s);
+  return0
+  }
