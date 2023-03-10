@@ -1,0 +1,138 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/time.h>
+ 
+typedef unsigned char CYRCHAR;
+typedef struct word {
+    int count;
+    char *w;
+} WORD;
+char* getWord(FILE*);
+int isCyr(CYRCHAR);
+CYRCHAR toLowerCyr(CYRCHAR);
+int cmpword_quant(WORD**, WORD**);
+int cmpword_alpha(WORD**, WORD**);
+int main(int ac, char* av[]) {
+    FILE *in,*out1,*out2;
+    long long int T1,T2;
+    struct timeval t;
+    char* wordTemp;
+    int i, repeatw;
+    WORD *words[1000000];
+    int totalw = 0, totalf = 0;
+    out1 = fopen("exit.txt", "w");
+    out2 = fopen("exit2.txt", "w");
+    if(ac < 2) {
+        printf("Вы не указали список файлов\n");
+        exit(0);
+    }
+    gettimeofday(&t,NULL);
+    T1=t.tv_sec*1000000+t.tv_usec;
+    while(--ac) {
+        totalf++;
+        in = fopen(av[ac], "r");
+        printf("Обрабатывается файл %s\n", av[ac]);
+        while( (wordTemp = getWord(in)) != NULL ) {
+            repeatw = 0;
+            for(i = 0; i < totalw; ++i) {
+                if(!strcmp(words[i]->w, wordTemp)) {
+                    words[i]->count++;
+                    repeatw = 1;
+                }
+            }
+            if(!repeatw) {
+                totalw++;
+                words[totalw-1] = (WORD*)malloc(sizeof(WORD));
+                words[totalw-1]->w = (char*)malloc(strlen(wordTemp)+1);
+                strcpy(words[totalw-1]->w, wordTemp);
+                words[totalw-1]->count = 1;
+            }
+        }
+        printf("\nОбработка файла %s закончена.\n", av[ac]);
+        fclose(in);
+    }
+    printf("Обработано %d файлов.\n", totalf);
+    qsort(words, totalw, sizeof(WORD*), (int (*)(const void*, const void*))cmpword_quant);
+    for(i = 0; i < totalw; ++i) {
+        fprintf(out1, "%-3i %s\n", words[i]->count, words[i]->w);
+    }
+    qsort(words, totalw, sizeof(WORD*), (int (*)(const void*, const void*))cmpword_alpha);
+    for(i = 0; i < totalw; ++i) {
+        fprintf(out2, "%s\n", words[i]->w);
+    }
+    fclose(out1);
+    fclose(out2);
+    for(i = 0; i < totalw; ++i) {
+        free(words[i]->w);
+        free(words[i]);
+    }
+    gettimeofday(&t,NULL);
+    T2=t.tv_sec*1000000+t.tv_usec;
+    printf("%lld секунд\n",T2-T1);
+    return 0;
+}
+char* getWord(FILE* f) {
+    static CYRCHAR ch[256];
+    int i, j;
+    do {
+        if(feof(f)) return NULL;
+        fscanf(f, "%s", ch);
+        for(i = 0; ch[i] != 0; ++i) {
+            ch[i] = toLowerCyr(ch[i]);
+            if( !isCyr(ch[i]) ) {
+                for(j = i; ch[j] != 0; ++j) {
+                    ch[j] = ch[j+1];
+                }
+                i--;
+            }
+        }
+    } while(ch[0] == 0);
+    return (char*)ch;
+}
+int isCyr(CYRCHAR c) {
+    return ( c > 191 || c == 168 || c == 184 ) ? 1 : 0;
+}
+CYRCHAR toLowerCyr(CYRCHAR c) {
+    if(c > 191 && c < 223) {
+        c = c + 32;
+    }
+    if(c == 168) {
+        c = 184;
+    }
+    return c;
+}
+int cmpword_quant(WORD** w1, WORD** w2) {
+    return (*w2)->count - (*w1)->count;
+}
+int cmpword_alpha(WORD** w1, WORD** w2) {
+    char *word1 = (char*)malloc(strlen((*w1)->w) + 1);
+    char *word2 = (char*)malloc(strlen((*w2)->w) + 1);
+    int i, size;
+    strcpy(word1, (*w1)->w);
+    strcpy(word2, (*w2)->w);   
+    if(strlen(word1) >= strlen(word2)) size = strlen(word1);
+    else size = strlen(word2);
+    for(i = 0; i < size; ++i) {
+        CYRCHAR c1 = (CYRCHAR)word1[i];
+        CYRCHAR c2 = (CYRCHAR)word2[i];
+        if(c1 == 0 && c2 == 0) return 0;
+        if(c1 == 0) return -1;
+        if(c2 == 0) return 1;
+        if(c1 == c2) continue;
+        if(c1 == 184 || c2 == 184) {
+            double a; double b;
+            if(c1 == 184) {
+                a = 229.5;
+                b = c2;
+            }
+            if(c2 == 184) {
+                a = c1;
+                b = 229.5;
+            }
+            return (a > b) ? 1 : (a == b) ? 0 : -1;
+        }
+        return c1 - c2;
+    }
+    return 0;
+}
