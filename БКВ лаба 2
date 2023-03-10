@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_WORDS 50000
+#define MAX_FILENAME 256
+#define MAX_WORD_LEN 64
+
+typedef struct {
+    char *word;
+    int count;
+} Vocabulary;
+
+Vocabulary *gen_vocabulary(char **filenames, int num_files, int *size);
+int compare_freq(const void *a, const void *b);
+int compare_word(const void *a, const void *b);
+
+int main(int argc, char **argv) {
+    if(argc < 2) {
+        printf("Usage: %s filename1 [filename2 ...]\n", argv[0]);
+        exit(-1);
+    }
+    int size;
+    Vocabulary *vocab = gen_vocabulary(argv+1, argc-1, &size);
+    if(size == 0) {
+        printf("No words found in the input files!\n");
+        free(vocab);
+        exit(-1);
+    }
+    FILE *freq_output = fopen("freq.txt", "w");
+    FILE *alpha_output = fopen("alpha.txt", "w");
+    for(int i=0; i<size; i++) {
+        fprintf(alpha_output, "%s\n", vocab[i].word);
+    }
+    qsort(vocab, size, sizeof(Vocabulary), compare_freq);
+    for(int i=0; i<size; i++) {
+        fprintf(freq_output, "%d %s\n", vocab[i].count, vocab[i].word);
+    }
+    fclose(freq_output);
+    fclose(alpha_output);
+    free(vocab);
+    return 0;
+}
+
+Vocabulary *gen_vocabulary(char **filenames, int num_files, int *size) {
+    Vocabulary *vocab = (Vocabulary*) malloc(sizeof(Vocabulary)*MAX_WORDS);
+    if(vocab == NULL) {
+        printf("Memory allocation error!\n");
+        exit(-1);
+    }
+    FILE *fp;
+    char word[MAX_WORD_LEN];
+    int num_words = 0;
+    for(int i=0; i<num_files; i++) {
+        fp = fopen(filenames[i], "r");
+        if(fp == NULL) {
+            printf("Can't open file %s\n", filenames[i]);
+            continue;
+        }
+        while(fscanf(fp, "%s", word) != EOF && num_words < MAX_WORDS) {
+            int len = strlen(word);
+            int j;
+            for(j=0; j<len; j++) {
+                if(!isalpha(word[j])) break;
+                word[j] = tolower(word[j]);
+            }
+            if(j == len) {
+                // valid word
+                int k;
+                for(k=0; k<num_words; k++) {
+                    if(strcmp(word, vocab[k].word) == 0) {
+                        vocab[k].count++;
+                        break;
+                    }
+                }
+                if(k == num_words) {
+                    // new word found
+                    vocab[num_words].word = (char*) malloc(sizeof(char)*(len+1));
+                    if(vocab[num_words].word == NULL) {
+                        printf("Memory allocation error!\n");
+                        fclose(fp);
+                        exit(-1);
+                    }
+                    strcpy(vocab[num_words].word, word);
+                    vocab[num_words].count = 1;
+                    num_words++;
+                }
+            }
+        }
+        fclose(fp);
+    }
+    *size = num_words;
+    return vocab;
+}
+
+int compare_freq(const void *a, const void *b) {
+    Vocabulary *vocab_a = (Vocabulary*) a;
+    Vocabulary *vocab_b = (Vocabulary*) b;
+    return (vocab_b->count - vocab_a->count);
+}
+
+int compare_word(const void *a, const void *b) {
+    Vocabulary *vocab_a = (Vocabulary*) a;
+    Vocabulary *vocab_b = (Vocabulary*) b;
+    return strcmp(vocab_a->word, vocab_b->word);
+}
