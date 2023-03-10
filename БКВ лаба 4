@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+double dist(double x1, double y1, double x2, double y2);
+double perimeter(int n, double *coord);
+double area(int n, double *coord);
+double diameter(int n, double *coord);
+
+int main() {
+    FILE *fp;
+    fp = fopen("polygon.txt", "r");
+    if (fp == NULL) {
+        printf("File opening error!");
+        exit(1);
+    }
+
+    int n, i, j, k;
+    fscanf(fp, "%d", &n);
+    double *coord = malloc(2 * n * sizeof(double));
+    for (i = 0; i < 2 * n; i++) {
+        fscanf(fp, "%lf", &coord[i]);
+    }
+    fclose(fp);
+
+    printf("Perimeter: %.8f\n", perimeter(n, coord));
+    printf("Area: %.8f\n", area(n, coord));
+    printf("Diameter: %.8f\n", diameter(n, coord));
+
+    printf("Введите две точки (j и k) чтобы найти расстояние между ними:\n");
+    scanf("%d%d", &j, &k);
+    printf("Distance between vertices %d and %d: %.2lf\n", j, k,
+           dist(coord[2 * j - 2], coord[2 * j - 1], coord[2 * k - 2], coord[2 * k - 1]));
+
+    double x, y;
+    printf("Enter coordinates (x, y) to check if it is inside the polygon:\n");
+    scanf("%lf %lf", &x, &y);
+
+    int count = 0;
+    for (i = 0; i < n; i++) {
+        double x1 = coord[2 * i];
+        double y1 = coord[2 * i + 1];
+        double x2 = coord[(2 * i + 2) % (2 * n)];
+        double y2 = coord[(2 * i + 3) % (2 * n)];
+        double a = y1 - y2;
+        double b = x2 - x1;
+        double c = x1 * y2 - x2 * y1;
+        if ((y > (-a / b * x - c / b) && y < (-a / b * x - c / b) + 0.000001) || (y < (-a / b * x - c / b) && y > (-a / b * x - c / b) - 0.000001)) {
+            count++;
+        }
+    }
+    if (count % 2 == 0) {
+        printf("The point is outside the polygon.\n");
+    } else {
+        printf("The point is inside the polygon.\n");
+    }
+
+    free(coord);
+    return 0;
+}
+
+double dist(double x1, double y1, double x2, double y2) {
+    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+double perimeter(int n, double *coord) {
+    double peri = 0;
+    int i;
+    for (i = 0; i < n; i++) {
+        peri += dist(coord[2 * i], coord[2 * i + 1], coord[(2 * i + 2) % (2 * n)], coord[(2 * i + 3) % (2 * n)]);
+    }
+    return peri;
+}
+
+double area(int n, double *coord) {
+    double area = 0;
+    int i;
+    for (i = 0; i < n; i++) {
+        area += coord[2 * i] * coord[(2 * i + 3) % (2 * n)] - coord[(2 * i + 2) % (2 * n)] * coord[2 * i + 1];
+    }
+    return fabs(area) / 2;
+}
+
+double diameter(int n, double *coord) {
+    double dia = 0;
+    int i, j;
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            double d = dist(coord[2 * i], coord[2 * i + 1], coord[2 * j], coord[2 * j + 1]);
+            if (d > dia) {
+                dia = d;
+            }
+        }
+    }
+    return dia;
+}
