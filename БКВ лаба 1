@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <ctype.h>
+
+int main() {
+    FILE *fp;
+    char filename[50];
+    int letter_cnt = 0, punct_cnt = 0, space_cnt = 0, line_cnt = 0, vowel_cnt = 0, consonant_cnt = 0, digit_cnt = 0, lowercase_cnt = 0, uppercase_cnt = 0;
+
+    printf("Enter the filename: ");
+    scanf("%s", filename);
+
+    fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+        printf("Error opening file.\n");
+        return 0;
+    }
+
+    char c;
+    while ((c = getc(fp)) != EOF) {
+        if (isalpha(c)) {
+            letter_cnt++;
+            if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U') {
+                vowel_cnt++;
+            } else {
+                consonant_cnt++;
+            }
+            if (islower(c)) {
+                lowercase_cnt++;
+            } else {
+                uppercase_cnt++;
+            }
+        } else if (isdigit(c)) {
+            digit_cnt++;
+        } else if (ispunct(c)) {
+            punct_cnt++;
+        } else if (isspace(c)) {
+            space_cnt++;
+            if (c == '\n') {
+                line_cnt++;
+            }
+        }
+    }
+
+    fclose(fp);
+
+    printf("Number of letters: %d\n", letter_cnt);
+    printf("Number of punctuation marks: %d\n", punct_cnt);
+    printf("Number of spaces: %d\n", space_cnt);
+    printf("Number of lines: %d\n", line_cnt);
+    printf("Number of vowels: %d\n", vowel_cnt);
+    printf("Number of consonants: %d\n", consonant_cnt);
+    printf("Number of digits: %d\n", digit_cnt);
+    printf("Number of lowercase letters: %d\n", lowercase_cnt);
+    printf("Number of uppercase letters: %d\n", uppercase_cnt);
+
+    return 0;
+}
