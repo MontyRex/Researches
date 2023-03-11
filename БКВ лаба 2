@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
     for(int i=0; i<size; i++) {
         fprintf(alpha_output, "%s\n", vocab[i].word);
     }
+    
     qsort(vocab, size, sizeof(Vocabulary), compare_freq);
     for(int i=0; i<size; i++) {
         fprintf(freq_output, "%d %s\n", vocab[i].count, vocab[i].word);
