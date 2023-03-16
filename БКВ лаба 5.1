@@ -1,20 +1,17 @@
-// ðàçìåðû ñèìâîëà, êîëè÷åñòâî ïèêñåëåé, ïëîòíîñòü, ñâÿçíîñòü, äèàìåòð, ïåðèìåòð
-// íàéòè ïîõîæèå ãëèôû ïóòåì ñðàâíåíèÿ ãëèôîâ îäèíàêîâîãî ðàçìåðà.
-// Ïîõîæèå ãëèôû äîëæíû ñîäåðæàòü íå áîëåå 10% ðàëè÷àþùèõñÿ ïèêñåëåé.
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <ctype.h>
+#include <malloc.h>
 
-#define WIDTH  800
+#define WIDTH 800
 #define HEIGHT 600
 
-/* Îïðåäåëåíèå ñòðóêòóðû Point äëÿ õðàíåíèÿ êîîðäèíàò ïèêñåëÿ */
 struct Point {
     int x;
     int y;
 };
 
-/* Îïðåäåëåíèå ñòðóêòóðû Region äëÿ õðàíåíèÿ èíôîðìàöèè îá îáëàñòè */
 struct Region {
     int left;
     int right;
@@ -27,35 +24,25 @@ struct Region {
     float diameter;
 };
 
-/* Îïðåäåëåíèå ôóíêöèé äëÿ ðàáîòû ñ èçîáðàæåíèåì */
 void init_image(int image[HEIGHT][WIDTH]);
 void print_image(int image[HEIGHT][WIDTH]);
 void load_image(int image[HEIGHT][WIDTH], char* file_name);
 void save_image(int image[HEIGHT][WIDTH], char* file_name);
 
-/* Îïðåäåëåíèå ôóíêöèé äëÿ ðàáîòû ñ îáëàñòÿìè */
 void find_regions(int image[HEIGHT][WIDTH], struct Region regions[], int* num_regions);
 void get_region_data(int image[HEIGHT][WIDTH], struct Point points[], int num_points, struct Region* region);
 
-/* Îïðåäåëåíèå äîïîëíèòåëüíûõ ôóíêöèé */
 int is_pixel_black(int pixel);
 float calculate_distance(struct Point a, struct Point b);
 
 int main(int argc, char* argv[]) {
-    int image[HEIGHT][WIDTH];           /* Ìàññèâ äëÿ õðàíåíèÿ èçîáðàæåíèÿ */
-    struct Region regions[100];         /* Ìàññèâ äëÿ õðàíåíèÿ èíôîðìàöèè îá îáëàñòÿõ */
-    int num_regions = 0;                /* Êîëè÷åñòâî îáíàðóæåííûõ îáëàñòåé */
+    int image[HEIGHT][WIDTH];           
+    struct Region regions[100];         
+    int num_regions = 0;                
 
-    /* Èíèöèàëèçàöèÿ ìàññèâà èçîáðàæåíèÿ */
     init_image(image);
-
-    /* Çàãðóçêà èçîáðàæåíèÿ */
     load_image(image, "image.bmp");
-
-    /* Ïîèñê îáëàñòåé */
     find_regions(image, regions, &num_regions);
-
-    /* Âûâîä ñòàòèñòèêè îáëàñòåé */
     printf("Found %d regions:\n", num_regions);
     int i;
     for (i = 0; i < num_regions; i++) {
@@ -66,7 +53,6 @@ int main(int argc, char* argv[]) {
 }
 
 void init_image(int image[HEIGHT][WIDTH]) {
-    /* Çàïîëíåíèå ìàññèâà èçîáðàæåíèÿ áåëûì öâåòîì */
     int i;
     for (i = 0; i < HEIGHT; i++) {
     	int j;
@@ -77,7 +63,6 @@ void init_image(int image[HEIGHT][WIDTH]) {
 }
 
 void print_image(int image[HEIGHT][WIDTH]) {
-    /* Âûâîä èçîáðàæåíèÿ íà ýêðàí */
     int i;
     for ( i= 0; i < HEIGHT; i++) {
     	int j;
@@ -89,27 +74,22 @@ void print_image(int image[HEIGHT][WIDTH]) {
 }
 
 void load_image(int image[HEIGHT][WIDTH], char* file_name) {
-    /* Çàãðóçêà èçîáðàæåíèÿ èç ôàéëà */
     FILE* fp = fopen(file_name, "rb");
     if (fp == NULL) {
         printf("Unable to open file '%s'\n", file_name);
         exit(-1);
     }
-
-    fseek(fp, 10, SEEK_SET);            /* Íàõîæäåíèå ñìåùåíèÿ äî íà÷àëà äàííûõ */
-    fread(&image[0][0], 3*WIDTH*HEIGHT, 1, fp);  /* ×òåíèå äàííûõ */
+    fseek(fp, 10, SEEK_SET);            
+    fread(&image[0][0], 3*WIDTH*HEIGHT, 1, fp);  
     fclose(fp);
 }
 
 void save_image(int image[HEIGHT][WIDTH], char* file_name) {
-    /* Ñîõðàíåíèå èçîáðàæåíèÿ â ôàéë */
     FILE* fp = fopen(file_name, "wb");
     if (fp == NULL) {
         printf("Unable to open file '%s' for saving\n", file_name);
         exit(-1);
     }
-
-    /* Çàïèñü çàãîëîâêà ôàéëà BMP */
     fwrite("BM", 1, 2, fp);
     int file_size = 54 + 3*WIDTH*HEIGHT;
     fwrite(&file_size, 1, 4, fp);
@@ -128,38 +108,31 @@ void save_image(int image[HEIGHT][WIDTH], char* file_name) {
     fwrite("\0\0\0\0", 1, 4, fp);
     fwrite("\0\0\0\0", 1, 4, fp);
     fwrite("\0\0\0\0", 1, 4, fp);
-
-    /* Çàïèñü äàííûõ èçîáðà
-æåíèÿ */
     fwrite(&image[0][0], 3*WIDTH*HEIGHT, 1, fp);
     fclose(fp);
 }
 
 void find_regions(int image[HEIGHT][WIDTH], struct Region regions[], int* num_regions) {
-    int visited[HEIGHT][WIDTH] = {{0}};    /* Ìàññèâ äëÿ îòìåòêè ïîñåùåííûõ ïèêñåëåé */
-    struct Point points[WIDTH*HEIGHT];     /* Ìàññèâ äëÿ õðàíåíèÿ êîîðäèíàò ïèêñåëåé â îáëàñòè */
-    int num_points = 0;                    /* Êîëè÷åñòâî ïèêñåëåé â îáëàñòè */
+    int visited[HEIGHT][WIDTH] = {{0}};    
+    struct Point points[WIDTH*HEIGHT];     
+    int num_points = 0;                    
 
-    /* Îáõîä âñåõ ïèêñåëåé èçîáðàæåíèÿ */
+    
     int i;
     for (i = 0; i < HEIGHT; i++) {
     	int j;
         for (j = 0; j < WIDTH; j++) {
-            /* Åñëè ïèêñåëü åùå íå áûë ïîñåùåí è ÷åðíûé, òî íà÷èíàåòñÿ íîâàÿ îáëàñòü */
             if (!visited[i][j] && is_pixel_black(image[i][j])) {
-                /* Íàõîæäåíèå êîîðäèíàò êðàéíèõ ïèêñåëåé îáëàñòè */
                 int left = j;
                 int right = j;
                 int top = i;
                 int bottom = i;
 
-                /* Äîáàâëåíèå íà÷àëüíîãî ïèêñåëÿ â ìàññèâ ïèêñåëåé îáëàñòè */
                 points[0].x = j;
                 points[0].y = i;
                 num_points = 1;
                 visited[i][j] = 1;
-
-                /* Ïîèñê îñòàëüíûõ ïèêñåëåé ñ ïîìîùüþ àëãîðèòìà ïîèñêà â ãëóáèíó */
+                
                 int stack_top = 0;
                 struct Point stack[WIDTH*HEIGHT];
                 stack[stack_top++] = points[0];
@@ -167,7 +140,6 @@ void find_regions(int image[HEIGHT][WIDTH], struct Region regions[], int* num_re
                     struct Point current = stack[--stack_top];
                     int x = current.x;
                     int y = current.y;
-                    /* Ïðîâåðêà ñîñåäíèõ ïèêñåëåé */
                     if (x > 0 && !visited[y][x-1] && is_pixel_black(image[y][x-1])) {
                         visited[y][x-1] = 1;
                         points[num_points].x = x-1;
@@ -209,16 +181,12 @@ void find_regions(int image[HEIGHT][WIDTH], struct Region regions[], int* num_re
                         }
                     }
                 }
-
-                /* Çàïîëíåíèå ñòðóêòóðû Region äàííûìè îá îáíàðóæåííîé îáëàñòè */
                 regions[*num_regions].left = left;
                 regions[*num_regions].right = right;
                 regions[*num_regions].top = top;
                 regions[*num_regions].bottom = bottom;
                 regions[*num_regions].size = num_points;
                 get_region_data(image, points, num_points, &regions[*num_regions]);
-
-                /* Ïåðåõîä ê ñëåäóþùåé îáíàðóæåííîé îáëàñòè */
                 (*num_regions)++;
             }
         }
@@ -237,14 +205,14 @@ void get_region_data(int image[HEIGHT][WIDTH], struct Point points[], int num_po
     int perimeter = 0;
     int area = 0;
 
-    /* Âû÷èñëåíèå ïëîòíîñòè */
+    
     area = num_points;
     float density = (float) area / ((region->right - region->left + 1) * (region->bottom - region->top + 1));
 
-    /* Âû÷èñëåíèå ñâÿçíîñòè */
+    
     float connectivity = (float) num_points / (region->perimeter * region->perimeter);
 
-    /* Âû÷èñëåíèå äèàìåòðà */
+    
     float diameter = 0.0;
     int i;
     for (i = 0; i < num_points; i++) {
@@ -257,7 +225,6 @@ void get_region_data(int image[HEIGHT][WIDTH], struct Point points[], int num_po
         }
     }
 
-    /* Çàïîëíåíèå ñòðóêòóðû Region äàííûìè */
     region->perimeter = perimeter;
     region->density = density;
     region->connectivity = connectivity;
@@ -265,7 +232,7 @@ void get_region_data(int image[HEIGHT][WIDTH], struct Point points[], int num_po
 }
 
 float calculate_distance(struct Point a, struct Point b) {
-    /* Âû÷èñëåíèå ðàññòîÿíèÿ ìåæäó äâóìÿ òî÷êàìè */
+    
     float dx = a.x - b.x;
     float dy = a.y - b.y;
     return sqrt(dx*dx + dy*dy);
