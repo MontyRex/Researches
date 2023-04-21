@@ -1,1 +1,54 @@
-Тут типо квикхулл олгаритм
+//Тут типо квикхулл олгаритм
+struct qhVertex
+{
+  qhVertex * Prev;
+  qhVertex * Next;
+
+  // Optional (дополнительно)
+  qhHalfEdge* Edge;
+
+  qhVector3 Position;
+};
+struct qhHalfEdge
+{
+  qhVertex* Tail;
+
+  qhHalfEdge* Prev;
+  qhHalfEdge* Next;
+  qhHalfEdge* Twin;
+
+  qhFace* Face;
+};
+struct qhFace
+{
+  qhFace* Prev;
+  qhFace* Next;
+
+  qhHalfEdge* Edge;
+  qhList< qhVertex > ConflictList;
+};
+
+void qhConvex::Construct( const qhArray< qhVector3 >& Vertices )
+{
+  if ( !BuildlnitialHull( Vertices) )
+    return;
+
+  qhVertex* Vertex = NextConflictVertex();
+  while ( Vertex != NULL )
+  {
+    AddVertexToHull( Vertex );
+    Vertex = NextConflictVertex();
+  }
+};
+
+void qhConvex::AddVertex( const qhVertex* Vertex )
+{
+  qhArray< qhHalfEdge* > Horizon;
+  BuildHorizion( Horizon );
+
+  qhArray< qhFace* > NewFaces;
+  BuildNewFaces( NewFaces, Horizon );
+  MergeFaces( NewFaces );
+
+  ResolveOrphans( NewFaces );
+};
